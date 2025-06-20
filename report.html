@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Record</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+</head>
+<body>
+  <div class="container">
+    <h2>Pill Track Record</h2>
+    <ul id="trackList"></ul>
+    <button onclick="downloadPDF()">Download Log File</button>
+
+  </div>
+
+  <script>
+
+    const currentUser = localStorage.getItem("currentUser");
+    const logs = JSON.parse(localStorage.getItem(currentUser + "_log")) || [];
+    const trackList = document.getElementById("trackList");
+
+[...logs].reverse().forEach(log => {
+  const li = document.createElement("li");
+  li.textContent = log;
+  trackList.appendChild(li);
+});
+
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const user = localStorage.getItem("currentUser") || "guest";
+    const key = user + "_log";
+    const logs = JSON.parse(localStorage.getItem(key)) || [];
+
+    if (logs.length === 0) {
+      alert("No logs available to generate report.");
+      return;
+    }
+
+    const now = new Date();
+    const timestamp = now.toLocaleString();
+
+    // Title & Meta Info
+    doc.setFontSize(16);
+    doc.text("Pill Reminder Report", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`User: ${user}`, 14, 28);
+    doc.text(`Downloaded on: ${timestamp}`, 14, 34);
+
+    // Prepare table data
+// Prepare table data
+const tableData = logs.map(log => {
+  const [dateTime, statusRaw] = log.split(" - ");
+  const [datePart, timePart] = dateTime.split("T");
+  const status = (statusRaw || "").trim();  // fallback + clean
+  return [datePart, timePart, status];
+});
+
+
+    // AutoTable
+    doc.autoTable({
+      startY: 40,
+      head: [["Date", "Time", "Status"]],
+      body: tableData,
+    });
+
+    // Save the PDF
+    doc.save(`${user}_pill_report.pdf`);
+  }
+
+
+
+
+
+  </script>
+</body>
+</html>
