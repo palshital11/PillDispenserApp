@@ -17,9 +17,22 @@
 
 
 <script>
+
+const user = localStorage.getItem("currentUser");
+  if (!user) {
+    // Redirect to login if user is not logged in
+    window.location.replace("index.html");
+  }
+
+  // Prevent going back to login/signup using browser
+  history.pushState(null, null, location.href);
+  window.onpopstate = function () {
+    history.go(1);  // Forces forward navigation
+  };
+
 function logout() {
   localStorage.removeItem("currentUser");
-  window.location.href = "index.html"; // Redirect to login page
+  window.location.replace("index.html"); // Redirect to login page
 }
 </script>
 
