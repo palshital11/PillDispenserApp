@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pill Scheduler (Flexible)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<style>
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ccc;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+input[type="date"],
+input[type="time"] {
+  padding: 8px;
+  font-size: 16px;
+}
+
+button {
+  padding: 10px 16px;
+  font-size: 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #218838;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #f1f1f1;
+  margin: 6px 0;
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+li button {
+  background: #dc3545;
+  font-size: 14px;
+  padding: 5px 10px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 10px #444;
+}
+
+.modal-content button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #28a745;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+</style>
+
+
+
+</head>
+<body>
+  <div class="container">
+    <h2>Set Dosage Schedule</h2>
+
+    <div class="input-group">
+      <label>Date: <input type="date" id="doseDate"></label>
+      <label>Time: <input type="time" id="doseTime"></label>
+      <button onclick="addDose()">Add Dose</button>
+    </div>
+
+   <h3>Doses Left: <span id="doseCount">0</span></h3>
+
+    <h3>Next Dose</h3>
+    <p id="nextDose">--</p>
+
+    <h3>All Doses</h3>
+    <ul id="doseList"></ul>
+
+<button onclick="goToDashboard()">Return to Dashboard</button>
+<audio id="pillAlert" src="pill_alert.mp3" preload="auto" loop></audio>
+<audio id="getWell" src="get_well.mp3" preload="auto"></audio>
+
+   <div id="customAlert" class="modal">
+	<div class="modal-content">
+	  <p>💊 Hey! It's time to take your pill.</p>
+    	  <button onclick="acknowledgeDose()">Yes, Taking</button>
+   	</div>
+   </div>
+
+
+
+  <script>
+const dateInput = document.getElementById("doseDate");
+const timeInput = document.getElementById("doseTime");
+const doseList = document.getElementById("doseList");
+const nextDose = document.getElementById("nextDose");
+const pillAlert = document.getElementById("pillAlert");
+const getWell = document.getElementById("getWell");
+const customAlert = document.getElementById("customAlert");
+const doseCount = document.getElementById("doseCount");
+
+const user = localStorage.getItem("currentUser") || "guest";
+
+let doses = JSON.parse(localStorage.getItem(user + "_doses")) || [];
+let alertedDoses = new Set();
+let currentAlertedDose = null;
+let pillTimeout = null;
+
+// Save doses to localStorage
+function saveDoses() {
+  localStorage.setItem(user + "_doses", JSON.stringify(doses));
+  renderDoses();
+  updateNextDose();
+}
+
+// Add new dose
+function addDose() {
+  const date = dateInput.value;
+  const time = timeInput.value;
+
+  if (!date || !time) {
+    alert("Please select date and time!");
+    return;
+  }
+
+  if (doses.length >= 21) {
+    alert("Only 21 doses allowed for the week!");
+    return;
+  }
+
+  doses.push({ date, time });
+  doses.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+  saveDoses();
+
+  dateInput.value = "";
+  timeInput.value = "";
+}
+
+// Render dose list
+function renderDoses() {
+  doseList.innerHTML = "";
+  doses.forEach((dose, index) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      ${dose.date} at ${dose.time}
+      <button onclick="removeDose(${index})">Delete</button>
+    `;
+    doseList.appendChild(li);
+  });
+
+  // Update count
+  doseCount.textContent = doses.length;
+}
+
+// Remove dose by index
+function removeDose(index) {
+  doses.splice(index, 1);
+  saveDoses();
+}
+
+// Show next upcoming dose
+function updateNextDose() {
+  const now = new Date();
+  const upcoming = doses.find(d => new Date(`${d.date}T${d.time}`) > now);
+  if (upcoming) {
+    const dt = new Date(`${upcoming.date}T${upcoming.time}`);
+    nextDose.textContent = `${dt.toDateString()} at ${dt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+  } else {
+    nextDose.textContent = "No upcoming dose.";
+  }
+}
+
+// Pill alert trigger
+function checkAlerts() {
+  const now = new Date();
+
+  const nowStr = 
+    now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + 'T' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0');
+
+  doses.forEach(dose => {
+    const doseTimeStr = `${dose.date}T${dose.time}`;
+    if (nowStr === doseTimeStr && !alertedDoses.has(doseTimeStr)) {
+      showCustomAlert(doseTimeStr);
+    }
+  });
+}
+
+
+// Show modal alert
+function showCustomAlert(doseTimeStr) {
+  currentAlertedDose = doseTimeStr;
+  customAlert.style.display = "flex";
+  try {
+    pillAlert.play();
+  } catch (e) {
+    console.warn("Audio play failed:", e);
+  }
+
+  alertedDoses.add(doseTimeStr);
+
+  pillTimeout = setTimeout(() => {
+    logDoseStatus(doseTimeStr, "Missed");
+    doses = doses.filter(d => `${d.date}T${d.time}` !== doseTimeStr);
+    saveDoses();
+    customAlert.style.display = "none";
+    pillAlert.pause();
+    pillAlert.currentTime = 0;
+    currentAlertedDose = null;
+  }, 60000); // 1 minute
+}
+
+// When user clicks "Yes, taking"
+function acknowledgeDose() {
+  clearTimeout(pillTimeout);
+  customAlert.style.display = "none";
+  pillAlert.pause();
+  pillAlert.currentTime = 0;
+  getWell.play();
+
+  if (currentAlertedDose) {
+    logDoseStatus(currentAlertedDose, "Taken");
+    doses = doses.filter(d => `${d.date}T${d.time}` !== currentAlertedDose);
+    saveDoses();
+    currentAlertedDose = null;
+  }
+}
+
+// Save log with status
+function logDoseStatus(dateTimeStr, status) {
+  const key = user + "_log";
+  const logs = JSON.parse(localStorage.getItem(key)) || [];
+
+  if (!logs.some(l => l.includes(dateTimeStr))) {
+    logs.push(`${dateTimeStr} - ${status}`);
+    localStorage.setItem(key, JSON.stringify(logs));
+  }
+}
+
+//Back to dashboard
+function goToDashboard() {
+  window.location.href = "landing.html";
+}
+
+// Initial load
+renderDoses();
+updateNextDose();
+setInterval(checkAlerts, 5000);
+</script>
+
+</body>
+</html>

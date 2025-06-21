@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Record</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+
+
+</head>
+<body>
+  <div class="container">
+    <h2>Pill Track Record</h2>
+    <ul id="trackList"></ul>
+    <button onclick="goToDashboard()">Return to Dashboard</button>
+  </div>
+
+  <script>
+
+    const currentUser = localStorage.getItem("currentUser");
+    const logs = JSON.parse(localStorage.getItem(currentUser + "_log")) || [];
+    const trackList = document.getElementById("trackList");
+
+[...logs].reverse().forEach(log => {
+  const li = document.createElement("li");
+  li.textContent = log;
+  trackList.appendChild(li);
+});
+
+function goToDashboard() {
+  window.location.href = "landing.html";
+}
+
+
+  </script>
+</body>
+</html>

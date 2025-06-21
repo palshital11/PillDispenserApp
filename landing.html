@@ -1,0 +1,29 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+  <div class="container">
+    <h2>Welcome!</h2>
+    <div class="card" onclick="location.href='setdosage.html'">Set Dosage</div>
+    <div class="card" onclick="location.href='track.html'">Track Record</div>
+    <div class="card" onclick="location.href='report.html'">Monthly Report</div>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+
+<script>
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "index.html"; // Redirect to login page
+}
+</script>
+
+
+
+</body>
+</html>
