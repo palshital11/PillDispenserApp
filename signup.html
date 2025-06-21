@@ -16,17 +16,27 @@
   </div>
 
   <script>
-    function signup() {
-      const user = document.getElementById("newUser").value;
-      const pass = document.getElementById("newPass").value;
-      if (localStorage.getItem(user)) {
-        alert("User already exists");
-        return;
-      }
-      localStorage.setItem(user, pass);
-      alert("Account created. Please login.");
-      window.location.href = "index.html";
+  function signup() {
+    const user = document.getElementById("newUser").value.trim();
+    const pass = document.getElementById("newPass").value.trim();
+
+    // ✅ Check for empty inputs
+    if (!user || !pass) {
+      alert("Username and password cannot be empty!");
+      return;
     }
+
+    // 🚫 Prevent duplicate usernames
+    if (localStorage.getItem(user)) {
+      alert("User already exists");
+      return;
+    }
+
+    // ✅ Save new account
+    localStorage.setItem(user, pass);
+    alert("Account created. Please login.");
+    window.location.href = "index.html";
+  }
   </script>
 </body>
 </html>
