@@ -16,6 +16,13 @@
   </div>
 
   <script>
+
+  const user = localStorage.getItem("currentUser");
+  if (user) {
+    // Already logged in? Go to dashboard directly
+    window.location.replace("landing.html");
+  }
+
   function signup() {
     const user = document.getElementById("newUser").value.trim();
     const pass = document.getElementById("newPass").value.trim();
@@ -47,6 +54,7 @@
     alert("Account created. Please login.");
     window.location.href = "index.html";
   }
+
   </script>
 </body>
 </html>
