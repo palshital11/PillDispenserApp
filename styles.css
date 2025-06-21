@@ -102,7 +102,7 @@ li {
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 60px; /* prevent layout jump */
+  min-height: 60px;
   overflow: hidden;
 }
 
@@ -115,15 +115,16 @@ li {
   background: #e3f2fd;
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  white-space: nowrap;           /* 💥 Keeps everything in one line */
+  white-space: nowrap;
   text-align: center;
-  display: inline-block;
+  display: inline-block;      /* ✅ This ensures width fits content */
+  max-width: 100%;            /* prevents overflow on small screens */
 }
 
 
 @keyframes typing {
   from { width: 0; }
-  to { width: 100%; }
+  to { width: 90%; }
 }
 
 @keyframes blink-caret {
