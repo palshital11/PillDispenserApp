@@ -21,8 +21,18 @@
     const pass = document.getElementById("newPass").value.trim();
 
     // ✅ Check for empty inputs
-    if (!user || !pass) {
+    if (!user && !pass) {
       alert("Username and password cannot be empty!");
+      return;
+    }
+
+    if (!user) {
+      alert("Username cannot be empty!");
+      return;
+    }
+
+    if (!pass) {
+      alert("Password cannot be empty!");
       return;
     }
 
